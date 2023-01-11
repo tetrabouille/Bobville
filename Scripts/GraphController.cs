@@ -44,7 +44,7 @@ public class GraphController : MonoBehaviour
         points = gameObject.GetComponentsInChildren<PointController>().ToList()
             .FindAll(point => point.tag == "Point");
 
-        if (!isConfigValid()) Debug.Log("Config not valid !");
+        if (!IsConfigValid()) Debug.Log("Config not valid !");
         else Debug.Log("Config valid");
     }
 
@@ -57,7 +57,7 @@ public class GraphController : MonoBehaviour
         }
     }
 
-    private bool isConfigValid()
+    private bool IsConfigValid()
     {
         int currentIndex = 0;
         return graphConfig.Aggregate(true, (acc, point) =>
