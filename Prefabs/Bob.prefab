@@ -1918,11 +1918,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 6944764010945408558}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1ed11e4523c343f4bd8e74649888051, type: 3}
+  m_Script: {fileID: 11500000, guid: b8b776020477049319b63869e862da3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialPath:
-  - {fileID: 0}
+  path: []
+  WALK_SPEED: 10
+  ROTATION_SPEED: 4
+  POINT_EPSILON: 0.8
+  ROTATION_EPSILON: 0.01
 --- !u!1 &7019995584280787199
 GameObject:
   m_ObjectHideFlags: 0
