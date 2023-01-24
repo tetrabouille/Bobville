@@ -8,14 +8,14 @@ namespace BobVille.Bob
 {
     public class BobController : MonoBehaviour
     {
-        [SerializeField] NodeController srcNode;
-        [SerializeField] NodeController dstNode;
+        [SerializeField] private NodeController currentNode;
 
-        [SerializeField] float WALK_SPEED = 10f;
-        [SerializeField] float ROTATION_SPEED = 4f;
-        [SerializeField] float WALK_EPSILON = 0.8f;
-        [SerializeField] float ROTATION_EPSILON = 0.01f;
-        [SerializeField] float WORK_TIME = 5f;
+        [SerializeField] private float WALK_SPEED = 10f;
+        [SerializeField] private float ROTATION_SPEED = 4f;
+        [SerializeField] private float WALK_EPSILON = 0.8f;
+        [SerializeField] private float ROTATION_EPSILON = 0.01f;
+        [SerializeField] private float WORK_TIME = 5f;
+        [SerializeField] private float WORK_SPEED = 1f;
 
         private ActionState actionState = ActionState.MoveOnPath;
         private MoveOnPathState moveOnPathState = MoveOnPathState.Turning;
@@ -23,19 +23,21 @@ namespace BobVille.Bob
         private GraphController graphController;
         private int pathIndex = 0;
         private float currentWorkTime = 0f;
+        private List<NodeController> nodes;
 
         // Start is called before the first frame update
         void Start()
         {
             graphController = GameObject.FindObjectsOfType<GraphController>().Single((g) => g.tag == "Graph");
+            nodes = graphController.transform.Find("Nodes").GetComponentsInChildren<NodeController>().ToList();
         }
 
         // Update is called once per frame
         void Update()
         {
-            if (path == null) path = graphController.GetPath(srcNode, dstNode);
 
             TakeAction();
+
         }
 
         void TakeAction()
@@ -53,24 +55,59 @@ namespace BobVille.Bob
 
         private void Work()
         {
+            currentWorkTime += WORK_SPEED * Time.deltaTime;
+            transform.Rotate(Vector3.up * ROTATION_SPEED * Time.deltaTime * 5);
 
+            if (currentWorkTime > WORK_TIME)
+            {
+                currentWorkTime = 0;
+                ChangeActionState(ActionState.MoveOnPath);
+            }
         }
 
         private void MoveOnPath()
         {
-            if (path == null || path.Count == 0) return;
+            if (path == null)
+            {
+                pathIndex = 0;
+                NodeController randomTarget = nodes[Random.Range(0, nodes.Count)];
+                while (randomTarget == this.currentNode) randomTarget = nodes[Random.Range(0, nodes.Count)];
 
-            if (path.Count <= pathIndex) pathIndex = 0;
-            NodeController currentNode = path[pathIndex];
+                path = graphController.GetPath(this.currentNode, randomTarget);
+            }
+
+            if (path.Count <= pathIndex || path.Count == 0)
+            {
+                pathIndex = 0;
+                ChangeActionState(ActionState.Work);
+                path = null;
+                return;
+            }
+
+            Debug.Log(pathIndex);
+            this.currentNode = path[pathIndex];
             switch (moveOnPathState)
             {
                 case MoveOnPathState.Turning:
-                    TurnOnPath(currentNode);
+                    TurnOnPath(this.currentNode);
                     break;
                 case MoveOnPathState.Walking:
-                    WalkOnPath(currentNode);
+                    WalkOnPath(this.currentNode);
                     break;
             }
+        }
+
+        private void ChangeActionState(ActionState newState)
+        {
+            Debug.Log($"action state : ${newState}");
+            ChangeMoveOnPathState(MoveOnPathState.Idle);
+            actionState = newState;
+        }
+
+        private void ChangeMoveOnPathState(MoveOnPathState newState)
+        {
+            Debug.Log($"move on path state : ${newState}");
+            moveOnPathState = newState;
         }
 
         private void TurnOnPath(NodeController currentNode)
@@ -95,11 +132,10 @@ namespace BobVille.Bob
             if (Vector3.Dot(Vector3.Normalize(target), transform.TransformDirection(Vector3.forward)) >= 1 - ROTATION_EPSILON)
             {
                 transform.rotation = Quaternion.LookRotation(target);
-                moveOnPathState = MoveOnPathState.Walking;
+                ChangeMoveOnPathState(MoveOnPathState.Walking);
                 return;
             }
 
-            Quaternion rotationTarget =
             transform.rotation = Quaternion.LookRotation(smoothTarget);
         }
 
