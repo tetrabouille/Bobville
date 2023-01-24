@@ -6,6 +6,8 @@ namespace BobVille.Graph
     {
         public NodeController nodeA;
         public NodeController nodeB;
+        public NodeController previousNode;
+        public NodeController nextNode;
 
         public LinkController(NodeController nodeA, NodeController nodeB)
         {
@@ -28,6 +30,20 @@ namespace BobVille.Graph
         {
             return Object.ReferenceEquals(nodeA, node) ||
                 Object.ReferenceEquals(nodeB, node);
+        }
+
+        public void SetPreviousNext(NodeController adjacentNode)
+        {
+            if (Object.ReferenceEquals(nodeA, adjacentNode))
+            {
+                this.previousNode = nodeB;
+                this.nextNode = nodeA;
+            }
+            else
+            {
+                this.previousNode = nodeA;
+                this.nextNode = nodeB;
+            }
         }
     }
 }

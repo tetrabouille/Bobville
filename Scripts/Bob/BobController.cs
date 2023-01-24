@@ -8,8 +8,6 @@ namespace BobVille.Bob
 {
     public class BobController : MonoBehaviour
     {
-        [SerializeField] private NodeController currentNode;
-
         [SerializeField] private float WALK_SPEED = 10f;
         [SerializeField] private float ROTATION_SPEED = 4f;
         [SerializeField] private float WALK_EPSILON = 0.8f;
@@ -17,6 +15,7 @@ namespace BobVille.Bob
         [SerializeField] private float WORK_TIME = 5f;
         [SerializeField] private float WORK_SPEED = 1f;
 
+        private NodeController currentNode;
         private ActionState actionState = ActionState.MoveOnPath;
         private MoveOnPathState moveOnPathState = MoveOnPathState.Turning;
         private List<NodeController> path;
@@ -62,6 +61,7 @@ namespace BobVille.Bob
             {
                 currentWorkTime = 0;
                 ChangeActionState(ActionState.MoveOnPath);
+                ChangeMoveOnPathState(MoveOnPathState.Turning);
             }
         }
 
@@ -70,6 +70,8 @@ namespace BobVille.Bob
             if (path == null)
             {
                 pathIndex = 0;
+                if (this.currentNode == null) this.currentNode = nodes[Random.Range(0, nodes.Count)];
+
                 NodeController randomTarget = nodes[Random.Range(0, nodes.Count)];
                 while (randomTarget == this.currentNode) randomTarget = nodes[Random.Range(0, nodes.Count)];
 
@@ -84,7 +86,6 @@ namespace BobVille.Bob
                 return;
             }
 
-            Debug.Log(pathIndex);
             this.currentNode = path[pathIndex];
             switch (moveOnPathState)
             {
@@ -112,26 +113,38 @@ namespace BobVille.Bob
 
         private void TurnOnPath(NodeController currentNode)
         {
-            Vector3 target = new Vector3(
+            Vector3 targetVector = new Vector3(
                 currentNode.transform.position.x - transform.position.x,
                 0,
                 currentNode.transform.position.z - transform.position.z
             );
 
-            Debug.DrawRay(transform.position, target, Color.red, 0.1f);
+            Vector3 targetPosition = new Vector3(
+                currentNode.transform.position.x,
+                transform.position.y,
+                currentNode.transform.position.z
+            );
+
+            if (Vector3.Distance(transform.position, targetPosition) <= WALK_EPSILON)
+            {
+                pathIndex++;
+                return;
+            }
+
+            Debug.DrawRay(transform.position, targetVector, Color.green, 0.1f);
 
             Vector3 smoothTarget = Vector3.RotateTowards(
                 new Vector3(transform.forward.x, 0, transform.forward.z),
-                target,
+                targetVector,
                 Time.deltaTime * ROTATION_SPEED,
                 0
             );
 
             Debug.DrawRay(transform.position, smoothTarget, Color.red, 0.1f);
 
-            if (Vector3.Dot(Vector3.Normalize(target), transform.TransformDirection(Vector3.forward)) >= 1 - ROTATION_EPSILON)
+            if (Vector3.Dot(Vector3.Normalize(targetVector), transform.TransformDirection(Vector3.forward)) >= 1 - ROTATION_EPSILON)
             {
-                transform.rotation = Quaternion.LookRotation(target);
+                transform.rotation = Quaternion.LookRotation(targetVector);
                 ChangeMoveOnPathState(MoveOnPathState.Walking);
                 return;
             }
@@ -148,12 +161,12 @@ namespace BobVille.Bob
             );
             if (Vector3.Distance(transform.position, target) <= WALK_EPSILON)
             {
-                moveOnPathState = MoveOnPathState.Turning;
+                ChangeMoveOnPathState(MoveOnPathState.Turning);
                 pathIndex++;
                 return;
             }
 
-            Debug.DrawRay(transform.position, target, Color.red, 0.1f);
+            Debug.DrawLine(transform.position, target, Color.green, 0.1f);
 
             transform.position = Vector3.MoveTowards(transform.position, target, Time.deltaTime * WALK_SPEED);
         }

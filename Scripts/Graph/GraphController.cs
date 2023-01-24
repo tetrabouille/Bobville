@@ -39,6 +39,18 @@ namespace BobVille.Graph
             });
         }
 
+        private void DrawShortestGraph(Dictionary<NodeController, List<LinkController>> currentGraph, Color color, float duration)
+        {
+            currentGraph.Keys.ToList().ForEach((currentNode) =>
+            {
+                List<LinkController> shortestLinks = currentGraph[currentNode];
+                shortestLinks.ForEach((link) =>
+                {
+                    Debug.DrawLine(link.nodeA.transform.position, link.nodeB.transform.position, color, duration);
+                });
+            });
+        }
+
         private void LogGraph(Dictionary<NodeController, List<NodeController>> currentGraph)
         {
             currentGraph.Keys.ToList().ForEach((key) =>
@@ -70,6 +82,34 @@ namespace BobVille.Graph
             return currentGraph;
         }
 
+        private Dictionary<NodeController, List<LinkController>> AddLinkToShortestGraph(
+            Dictionary<NodeController, List<LinkController>> currentGraph,
+            LinkController shortestLink,
+            NodeController adjacentNode,
+            NodeController previousNode
+            )
+        {
+            shortestLink.SetPreviousNext(adjacentNode);
+            List<LinkController> pathLinks = new List<LinkController>(currentGraph[previousNode]);
+            pathLinks.Add(shortestLink);
+            currentGraph[adjacentNode] = pathLinks;
+            return currentGraph;
+        }
+
+        private Dictionary<NodeController, List<LinkController>> GetEmptyShortestGraph()
+        {
+            Dictionary<NodeController, List<LinkController>> newGraph =
+                new Dictionary<NodeController, List<LinkController>>();
+
+            if (nodes == null) return newGraph;
+
+            return nodes.Aggregate(new Dictionary<NodeController, List<LinkController>>(), (acc, node) =>
+            {
+                acc[node] = new List<LinkController>();
+                return acc;
+            });
+        }
+
         private Dictionary<NodeController, List<NodeController>> GetEmptyGraph()
         {
             Dictionary<NodeController, List<NodeController>> newGraph =
@@ -94,18 +134,24 @@ namespace BobVille.Graph
 
         public List<NodeController> GetPath(NodeController srcNode, NodeController dstNode)
         {
-            Dictionary<NodeController, List<NodeController>> shortestGraph = GetShortestGraph(srcNode);
+            Dictionary<NodeController, List<LinkController>> shortestGraph = GetShortestGraph(srcNode);
 
-            DrawGraph(shortestGraph, Color.green, 500);
+            DrawShortestGraph(shortestGraph, Color.green, 3);
 
             List<NodeController> path = new List<NodeController>();
+
+            path.Add(srcNode);
+            shortestGraph[dstNode].ForEach((shortestLink) =>
+            {
+                path.Add(shortestLink.nextNode);
+            });
 
             return path;
         }
 
-        private Dictionary<NodeController, List<NodeController>> GetShortestGraph(NodeController initialNode)
+        private Dictionary<NodeController, List<LinkController>> GetShortestGraph(NodeController initialNode)
         {
-            Dictionary<NodeController, List<NodeController>> shortestGraph = GetEmptyGraph();
+            Dictionary<NodeController, List<LinkController>> shortestGraph = GetEmptyShortestGraph();
             Dictionary<NodeController, bool> visitedNodes = new Dictionary<NodeController, bool>();
             Dictionary<NodeController, float> distanceToNodes = new Dictionary<NodeController, float>();
 
@@ -148,10 +194,11 @@ namespace BobVille.Graph
                 });
                 if (shortestLink == null) break;
 
-                NodeController shortestNode = GetAdjacentNode(visitedNodes, shortestLink);
-                visitedNodes[shortestNode] = true;
+                NodeController adjacentNode = GetAdjacentNode(visitedNodes, shortestLink);
+                NodeController currentNode = GetCurrentNode(visitedNodes, shortestLink);
+                visitedNodes[adjacentNode] = true;
 
-                shortestGraph = AddLinkToGraph(shortestGraph, shortestLink);
+                shortestGraph = AddLinkToShortestGraph(shortestGraph, shortestLink, adjacentNode, currentNode);
                 candidateLinks = GetNextCandidateLinks(visitedNodes);
             }
 
