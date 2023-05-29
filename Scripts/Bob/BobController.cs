@@ -11,6 +11,7 @@ namespace BobVille.Bob
         [SerializeField] private float WALK_SPEED = 10f;
         [SerializeField] private float ROTATION_SPEED = 4f;
         [SerializeField] private float WALK_EPSILON = 0.8f;
+        [SerializeField] private float WALK_TIME = 10f;
         [SerializeField] private float ROTATION_EPSILON = 0.01f;
         [SerializeField] private float WORK_TIME = 5f;
         [SerializeField] private float WORK_SPEED = 1f;
@@ -22,13 +23,16 @@ namespace BobVille.Bob
         private GraphController graphController;
         private int pathIndex = 0;
         private float currentWorkTime = 0f;
+        private float currentWalkTime = 0f;
         private List<NodeController> nodes;
+        private Rigidbody rb;
 
         // Start is called before the first frame update
         void Start()
         {
             graphController = GameObject.FindObjectsOfType<GraphController>().Single((g) => g.tag == "Graph");
             nodes = graphController.transform.Find("Nodes").GetComponentsInChildren<NodeController>().ToList();
+            rb = GetComponent<Rigidbody>();
         }
 
         // Update is called once per frame
@@ -41,6 +45,8 @@ namespace BobVille.Bob
 
         void TakeAction()
         {
+            rb.angularVelocity = Vector3.zero;
+
             switch (actionState)
             {
                 case ActionState.Work:
@@ -75,7 +81,7 @@ namespace BobVille.Bob
                 NodeController randomTarget = nodes[Random.Range(0, nodes.Count)];
                 while (randomTarget == this.currentNode) randomTarget = nodes[Random.Range(0, nodes.Count)];
 
-                path = graphController.GetPath(this.currentNode, randomTarget);
+                path = graphController.graphCore.GetPath(this.currentNode, randomTarget);
             }
 
             if (path.Count <= pathIndex || path.Count == 0)
@@ -125,7 +131,7 @@ namespace BobVille.Bob
                 currentNode.transform.position.z
             );
 
-            if (Vector3.Distance(transform.position, targetPosition) <= WALK_EPSILON)
+            if (isOnTarget(targetPosition))
             {
                 pathIndex++;
                 return;
@@ -142,7 +148,7 @@ namespace BobVille.Bob
 
             Debug.DrawRay(transform.position, smoothTarget, Color.red, 0.1f);
 
-            if (Vector3.Dot(Vector3.Normalize(targetVector), transform.TransformDirection(Vector3.forward)) >= 1 - ROTATION_EPSILON)
+            if (isLookingAtTarget(targetVector))
             {
                 transform.rotation = Quaternion.LookRotation(targetVector);
                 ChangeMoveOnPathState(MoveOnPathState.Walking);
@@ -159,7 +165,7 @@ namespace BobVille.Bob
                 transform.position.y,
                 currentNode.transform.position.z
             );
-            if (Vector3.Distance(transform.position, target) <= WALK_EPSILON)
+            if (isOnTarget(target))
             {
                 ChangeMoveOnPathState(MoveOnPathState.Turning);
                 pathIndex++;
@@ -169,6 +175,16 @@ namespace BobVille.Bob
             Debug.DrawLine(transform.position, target, Color.green, 0.1f);
 
             transform.position = Vector3.MoveTowards(transform.position, target, Time.deltaTime * WALK_SPEED);
+        }
+
+        private bool isOnTarget(Vector3 target)
+        {
+            return Vector3.Distance(transform.position, target) <= WALK_EPSILON;
+        }
+
+        private bool isLookingAtTarget(Vector3 target)
+        {
+            return Vector3.Dot(Vector3.Normalize(target), transform.TransformDirection(Vector3.forward)) >= 1 - ROTATION_EPSILON;
         }
     }
 }

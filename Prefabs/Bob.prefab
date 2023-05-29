@@ -1887,6 +1887,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6944764010945408552}
   - component: {fileID: 6944764010945408553}
+  - component: {fileID: 3439168266294281825}
+  - component: {fileID: 3676232939932666145}
   m_Layer: 0
   m_Name: Bob
   m_TagString: Untagged
@@ -1903,7 +1905,7 @@ Transform:
   m_GameObject: {fileID: 6944764010945408558}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_Children:
   - {fileID: 8787972175458003960}
   m_Father: {fileID: 0}
@@ -1921,11 +1923,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8b776020477049319b63869e862da3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: []
-  WALK_SPEED: 10
-  ROTATION_SPEED: 4
-  POINT_EPSILON: 0.8
+  WALK_SPEED: 0.7
+  ROTATION_SPEED: 3
+  WALK_EPSILON: 0.03
+  WALK_TIME: 10
   ROTATION_EPSILON: 0.01
+  WORK_TIME: 0.3
+  WORK_SPEED: 1
+--- !u!54 &3439168266294281825
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6944764010945408558}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 84
+  m_CollisionDetection: 0
+--- !u!135 &3676232939932666145
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6944764010945408558}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1.119324
+  m_Center: {x: 0.6035292, y: 2.733746, z: 0}
 --- !u!1 &7019995584280787199
 GameObject:
   m_ObjectHideFlags: 0

@@ -4,46 +4,19 @@ namespace BobVille.Graph
 {
     public class LinkController : MonoBehaviour
     {
-        public NodeController nodeA;
-        public NodeController nodeB;
-        public NodeController previousNode;
-        public NodeController nextNode;
+        [SerializeField] private NodeController nodeA;
+        [SerializeField] private NodeController nodeB;
+        [SerializeField] private bool oriented;
 
-        public LinkController(NodeController nodeA, NodeController nodeB)
+        public GraphLink link;
+
+        public LinkController()
         {
-            this.nodeA = nodeA;
-            this.nodeB = nodeB;
         }
 
-        public float GetValue()
+        private void Start()
         {
-            return GetDistance();
-        }
-
-        public float GetDistance()
-        {
-            if (nodeA == null || nodeB == null) return -1;
-            return Vector3.Distance(nodeA.transform.position, nodeB.transform.position);
-        }
-
-        public bool Contains(NodeController node)
-        {
-            return Object.ReferenceEquals(nodeA, node) ||
-                Object.ReferenceEquals(nodeB, node);
-        }
-
-        public void SetPreviousNext(NodeController adjacentNode)
-        {
-            if (Object.ReferenceEquals(nodeA, adjacentNode))
-            {
-                this.previousNode = nodeB;
-                this.nextNode = nodeA;
-            }
-            else
-            {
-                this.previousNode = nodeA;
-                this.nextNode = nodeB;
-            }
+            this.link = new GraphLink(nodeA, nodeB, oriented);
         }
     }
 }
