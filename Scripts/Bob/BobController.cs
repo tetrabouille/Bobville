@@ -20,7 +20,7 @@ namespace BobVille.Bob
         private ActionState actionState = ActionState.MoveOnPath;
         private MoveOnPathState moveOnPathState = MoveOnPathState.Turning;
         private List<NodeController> path;
-        private GraphController graphController;
+        private AutoGraphController graphController;
         private int pathIndex = 0;
         private float currentWorkTime = 0f;
         private float currentWalkTime = 0f;
@@ -30,8 +30,8 @@ namespace BobVille.Bob
         // Start is called before the first frame update
         void Start()
         {
-            graphController = GameObject.FindObjectsOfType<GraphController>().Single((g) => g.tag == "Graph");
-            nodes = graphController.transform.Find("Nodes").GetComponentsInChildren<NodeController>().ToList();
+            graphController = GameObject.FindObjectsOfType<AutoGraphController>().Single((g) => g.tag == "Graph");
+            nodes = graphController.GetComponentsInChildren<NodeController>().ToList();
             rb = GetComponent<Rigidbody>();
         }
 

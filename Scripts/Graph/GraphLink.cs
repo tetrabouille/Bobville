@@ -30,6 +30,11 @@ namespace BobVille.Graph
             return Vector3.Distance(nodeA.transform.position, nodeB.transform.position);
         }
 
+        public float GetHeuristic(NodeController targetNode)
+        {
+            return Vector3.Distance(nodeB.transform.position, targetNode.transform.position);
+        }
+
         public bool Contains(NodeController node)
         {
             return Object.ReferenceEquals(nodeA, node) ||
@@ -44,9 +49,14 @@ namespace BobVille.Graph
             this.oriented = true;
         }
 
-        public Ray GetRay()
+        static public Ray GetRay(NodeController nodeA, NodeController nodeB)
         {
-            return new Ray(nodeA.transform.position, direction);
+            return new Ray(nodeA.transform.position, nodeB.transform.position - nodeA.transform.position);
+        }
+
+        public bool IsOriented()
+        {
+            return oriented;
         }
     }
 }

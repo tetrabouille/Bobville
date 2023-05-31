@@ -9,6 +9,7 @@ namespace BobVille.Graph
         public List<GraphLink> links;
         private List<NodeController> nodes;
         private Dictionary<NodeController, List<NodeController>> graph;
+        private Dictionary<NodeController, List<GraphLink>> shortestGraph;
 
         public GraphCore(List<GraphLink> links, List<NodeController> nodes)
         {
@@ -17,10 +18,36 @@ namespace BobVille.Graph
             this.graph = GetGraphFromLinks();
         }
 
+        public GraphCore(List<NodeController> nodes)
+        {
+            this.nodes = nodes;
+            ConstructGraphFromNodes();
+            this.graph = GetGraphFromLinks();
+        }
+
+        private void ConstructGraphFromNodes()
+        {
+            Debug.Log("Constructing graph from nodes : " + this.nodes.Count());
+            float MAX_DISTANCE = 2;
+            this.links = new List<GraphLink>();
+            this.nodes.ForEach(node =>
+            {
+                this.nodes.FindAll(otherNode =>
+                {
+                    return !Object.ReferenceEquals(node, otherNode) &&
+                        Vector3.Distance(node.transform.position, otherNode.transform.position) < MAX_DISTANCE;
+                }).ForEach(otherNode =>
+                {
+                    Debug.Log("Adding link between " + node.name + " and " + otherNode.name);
+                    this.links.Add(new GraphLink(node, otherNode));
+                });
+            });
+        }
+
         private Dictionary<NodeController, List<NodeController>> AddLinkToGraph(Dictionary<NodeController, List<NodeController>> currentGraph, GraphLink link)
         {
             if (!currentGraph[link.nodeA].Contains(link.nodeB)) currentGraph[link.nodeA].Add(link.nodeB);
-            if (!currentGraph[link.nodeB].Contains(link.nodeA)) currentGraph[link.nodeB].Add(link.nodeA);
+            if (!currentGraph[link.nodeB].Contains(link.nodeA) && !link.IsOriented()) currentGraph[link.nodeB].Add(link.nodeA);
             return currentGraph;
         }
 
@@ -73,9 +100,7 @@ namespace BobVille.Graph
 
         public List<NodeController> GetPath(NodeController srcNode, NodeController dstNode)
         {
-            Dictionary<NodeController, List<GraphLink>> shortestGraph = GetShortestGraph(srcNode);
-
-            DrawShortestGraph(shortestGraph, Color.green, 3);
+            shortestGraph = GetShortestGraph(srcNode, dstNode);
 
             List<NodeController> path = new List<NodeController>();
 
@@ -88,75 +113,87 @@ namespace BobVille.Graph
             return path;
         }
 
-        private Dictionary<NodeController, List<GraphLink>> GetShortestGraph(NodeController initialNode)
+        private Dictionary<NodeController, List<GraphLink>> GetShortestGraph(NodeController srcNode, NodeController dstNode)
         {
             Dictionary<NodeController, List<GraphLink>> shortestGraph = GetEmptyShortestGraph();
-            Dictionary<NodeController, bool> visitedNodes = new Dictionary<NodeController, bool>();
+
+            List<NodeController> openedListNodes = new List<NodeController>();
+            List<NodeController> closedListNodes = new List<NodeController>();
+
             Dictionary<NodeController, float> distanceToNodes = new Dictionary<NodeController, float>();
+            Dictionary<NodeController, float> heuristicOfNodes = new Dictionary<NodeController, float>();
 
             nodes.ForEach((node) =>
             {
-                visitedNodes[node] = false;
                 distanceToNodes[node] = -1;
+                heuristicOfNodes[node] = -1;
             });
 
-            visitedNodes[initialNode] = true;
-            distanceToNodes[initialNode] = 0;
+            openedListNodes.Add(srcNode);
+            distanceToNodes[srcNode] = 0;
 
-            List<GraphLink> candidateLinks = GetNextCandidateLinks(visitedNodes);
-            if (candidateLinks.Count == 0) return shortestGraph;
-
-            while (candidateLinks.Count != 0)
+            while (openedListNodes.Count != 0)
             {
-                GraphLink shortestLink = null;
-                float shortestDistance = -1;
+                NodeController closestNode = FindClosestNode(openedListNodes, distanceToNodes, heuristicOfNodes);
+                openedListNodes.Remove(closestNode);
+                closedListNodes.Add(closestNode);
 
-                candidateLinks.ForEach((currentLink) =>
+                if (Object.ReferenceEquals(closestNode, dstNode)) break;
+
+                GetSuccessorLinks(closestNode).ForEach((currentLink) =>
                 {
-                    float linkDistance = currentLink.GetValue();
-                    float currentDistance = distanceToNodes[currentLink.nodeA];
-                    float previousDistance = distanceToNodes[currentLink.nodeB];
+                    if (heuristicOfNodes[currentLink.nodeB] == -1) heuristicOfNodes[currentLink.nodeB] = currentLink.GetHeuristic(dstNode);
+                    float currentDistance = distanceToNodes[currentLink.nodeA] + currentLink.GetValue();
 
-                    float newDistance = currentDistance == -1 ? linkDistance : currentDistance + linkDistance;
+                    if (
+                        (closedListNodes.Contains(currentLink.nodeB) || openedListNodes.Contains(currentLink.nodeB)) &&
+                        currentDistance >= distanceToNodes[currentLink.nodeB]
+                    ) return;
 
-                    if (previousDistance == -1) distanceToNodes[currentLink.nodeB] = newDistance;
-                    else if (newDistance < previousDistance) distanceToNodes[currentLink.nodeB] = newDistance;
+                    closedListNodes.Remove(currentLink.nodeB);
+                    if (!openedListNodes.Contains(currentLink.nodeB)) openedListNodes.Add(currentLink.nodeB);
 
-                    if (shortestDistance == -1 || newDistance < shortestDistance)
-                    {
-                        shortestDistance = newDistance;
-                        shortestLink = currentLink;
-                    }
+                    shortestGraph = AddLinkToShortestGraph(shortestGraph, currentLink);
+                    distanceToNodes[currentLink.nodeB] = currentDistance;
                 });
-                if (shortestLink == null) break;
-
-                visitedNodes[shortestLink.nodeB] = true;
-
-                shortestGraph = AddLinkToShortestGraph(shortestGraph, shortestLink);
-                candidateLinks = GetNextCandidateLinks(visitedNodes);
             }
 
             return shortestGraph;
         }
 
-        private List<GraphLink> GetNextCandidateLinks(Dictionary<NodeController, bool> visitedNodes)
+        private NodeController FindClosestNode(
+            List<NodeController> openedListNodes,
+            Dictionary<NodeController, float> distanceToNodes,
+            Dictionary<NodeController, float> heuristicOfNodes
+        )
         {
-            return visitedNodes.Aggregate(
-                new List<GraphLink>(),
-                (acc, nodePair) =>
+            NodeController closestNode = openedListNodes[0];
+            float bestF = distanceToNodes[closestNode] + heuristicOfNodes[closestNode];
+
+            openedListNodes.ForEach((currentNode) =>
+            {
+                float currentF = distanceToNodes[currentNode] + heuristicOfNodes[currentNode];
+
+                Debug.Log("currentNode: " + currentNode.name + " currentF: " + currentF);
+
+                if (currentF < bestF)
                 {
-                    if (!nodePair.Value) return acc;
-
-                    NodeController node = nodePair.Key;
-                    graph[node].ForEach((adjacentNode) =>
-                    {
-                        if (visitedNodes[adjacentNode]) return;
-                        acc.Add(new GraphLink(node, adjacentNode, true));
-                    });
-
-                    return acc;
+                    closestNode = currentNode;
+                    bestF = currentF;
                 }
-            );
+            });
+
+            Debug.Log("closestNode: " + closestNode.name + " bestF: " + bestF);
+
+            return closestNode;
+        }
+
+        private List<GraphLink> GetSuccessorLinks(NodeController node)
+        {
+            return graph[node].Select((adjacentNode) =>
+            {
+                return new GraphLink(node, adjacentNode, true);
+            }).ToList();
         }
 
         // debugs
@@ -174,8 +211,11 @@ namespace BobVille.Graph
             });
         }
 
-        static public void DrawShortestGraph(Dictionary<NodeController, List<GraphLink>> currentGraph, Color color, float duration)
+        public void DrawShortestGraph(Color color, float duration, Dictionary<NodeController, List<GraphLink>> currentGraph = null)
         {
+            if (currentGraph == null) currentGraph = shortestGraph;
+            if (currentGraph == null) return;
+
             currentGraph.Keys.ToList().ForEach((currentNode) =>
             {
                 List<GraphLink> shortestLinks = currentGraph[currentNode];
@@ -202,6 +242,7 @@ namespace BobVille.Graph
                 });
             });
         }
+
     }
 
 }

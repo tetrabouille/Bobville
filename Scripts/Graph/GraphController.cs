@@ -19,10 +19,8 @@ namespace BobVille.Graph
         // Update is called once per frame
         void Update()
         {
-            if (Input.GetKey(KeyCode.Space))
-            {
-                graphCore.DrawGraph(Color.blue, 0.1f);
-            }
+            graphCore.DrawShortestGraph(Color.green, 0.1f);
+
         }
     }
 }
