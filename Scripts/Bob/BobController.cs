@@ -81,7 +81,7 @@ namespace BobVille.Bob
                 NodeController randomTarget = nodes[Random.Range(0, nodes.Count)];
                 while (randomTarget == this.currentNode) randomTarget = nodes[Random.Range(0, nodes.Count)];
 
-                path = graphController.graphCore.GetPath(this.currentNode, randomTarget);
+                path = graphController.graphCore.GetPath(this.currentNode, new List<NodeController>() { randomTarget });
             }
 
             if (path.Count <= pathIndex || path.Count == 0)

@@ -30,7 +30,18 @@ namespace BobVille.Graph
             return Vector3.Distance(nodeA.transform.position, nodeB.transform.position);
         }
 
-        public float GetHeuristic(NodeController targetNode)
+        public float GetHeuristic(List<NodeController> targetNodes)
+        {
+            // get shortest distance to any target node
+            float shortestDistance = targetNodes.Aggregate(float.MaxValue, (acc, targetNode) =>
+            {
+                float distance = GetDistanceTo(targetNode);
+                return distance < acc ? distance : acc;
+            });
+            return shortestDistance;
+        }
+
+        public float GetDistanceTo(NodeController targetNode)
         {
             return Vector3.Distance(nodeB.transform.position, targetNode.transform.position);
         }

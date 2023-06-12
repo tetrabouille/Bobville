@@ -98,11 +98,13 @@ namespace BobVille.Graph
             return currentGraph;
         }
 
-        public List<NodeController> GetPath(NodeController srcNode, NodeController dstNode)
+        public List<NodeController> GetPath(NodeController srcNode, List<NodeController> dstNodes)
         {
-            shortestGraph = GetShortestGraph(srcNode, dstNode);
+            shortestGraph = GetShortestGraph(srcNode, dstNodes);
 
             List<NodeController> path = new List<NodeController>();
+
+            NodeController dstNode = dstNodes.Find((dstNode) => shortestGraph[dstNode].Count != 0);
 
             path.Add(srcNode);
             shortestGraph[dstNode].ForEach((shortestLink) =>
@@ -113,7 +115,7 @@ namespace BobVille.Graph
             return path;
         }
 
-        private Dictionary<NodeController, List<GraphLink>> GetShortestGraph(NodeController srcNode, NodeController dstNode)
+        private Dictionary<NodeController, List<GraphLink>> GetShortestGraph(NodeController srcNode, List<NodeController> dstNodes)
         {
             Dictionary<NodeController, List<GraphLink>> shortestGraph = GetEmptyShortestGraph();
 
@@ -138,11 +140,11 @@ namespace BobVille.Graph
                 openedListNodes.Remove(closestNode);
                 closedListNodes.Add(closestNode);
 
-                if (Object.ReferenceEquals(closestNode, dstNode)) break;
+                if (dstNodes.Find((dstNode) => Object.ReferenceEquals(dstNode, closestNode)) != null) break;
 
                 GetSuccessorLinks(closestNode).ForEach((currentLink) =>
                 {
-                    if (heuristicOfNodes[currentLink.nodeB] == -1) heuristicOfNodes[currentLink.nodeB] = currentLink.GetHeuristic(dstNode);
+                    if (heuristicOfNodes[currentLink.nodeB] == -1) heuristicOfNodes[currentLink.nodeB] = currentLink.GetHeuristic(dstNodes);
                     float currentDistance = distanceToNodes[currentLink.nodeA] + currentLink.GetValue();
 
                     if (
