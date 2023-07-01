@@ -7,18 +7,18 @@ namespace BobVille.Graph
     public class GraphCore
     {
         public List<GraphLink> links;
-        private List<NodeController> nodes;
-        private Dictionary<NodeController, List<NodeController>> graph;
-        private Dictionary<NodeController, List<GraphLink>> shortestGraph;
+        private List<MonoBehaviour> nodes;
+        private Dictionary<MonoBehaviour, List<MonoBehaviour>> graph;
+        private Dictionary<MonoBehaviour, List<GraphLink>> shortestGraph;
 
-        public GraphCore(List<GraphLink> links, List<NodeController> nodes)
+        public GraphCore(List<GraphLink> links, List<MonoBehaviour> nodes)
         {
             this.links = links;
             this.nodes = nodes;
             this.graph = GetGraphFromLinks();
         }
 
-        public GraphCore(List<NodeController> nodes)
+        public GraphCore(List<MonoBehaviour> nodes)
         {
             this.nodes = nodes;
             ConstructGraphFromNodes();
@@ -44,14 +44,14 @@ namespace BobVille.Graph
             });
         }
 
-        private Dictionary<NodeController, List<NodeController>> AddLinkToGraph(Dictionary<NodeController, List<NodeController>> currentGraph, GraphLink link)
+        private Dictionary<MonoBehaviour, List<MonoBehaviour>> AddLinkToGraph(Dictionary<MonoBehaviour, List<MonoBehaviour>> currentGraph, GraphLink link)
         {
             if (!currentGraph[link.nodeA].Contains(link.nodeB)) currentGraph[link.nodeA].Add(link.nodeB);
             if (!currentGraph[link.nodeB].Contains(link.nodeA) && !link.IsOriented()) currentGraph[link.nodeB].Add(link.nodeA);
             return currentGraph;
         }
 
-        private Dictionary<NodeController, List<NodeController>> GetGraphFromLinks()
+        private Dictionary<MonoBehaviour, List<MonoBehaviour>> GetGraphFromLinks()
         {
             return links.Aggregate(GetEmptyGraph(), (acc, link) =>
             {
@@ -59,36 +59,36 @@ namespace BobVille.Graph
             });
         }
 
-        private Dictionary<NodeController, List<GraphLink>> GetEmptyShortestGraph()
+        private Dictionary<MonoBehaviour, List<GraphLink>> GetEmptyShortestGraph()
         {
-            Dictionary<NodeController, List<GraphLink>> newGraph =
-                new Dictionary<NodeController, List<GraphLink>>();
+            Dictionary<MonoBehaviour, List<GraphLink>> newGraph =
+                new Dictionary<MonoBehaviour, List<GraphLink>>();
 
             if (nodes == null) return newGraph;
 
-            return nodes.Aggregate(new Dictionary<NodeController, List<GraphLink>>(), (acc, node) =>
+            return nodes.Aggregate(new Dictionary<MonoBehaviour, List<GraphLink>>(), (acc, node) =>
             {
                 acc[node] = new List<GraphLink>();
                 return acc;
             });
         }
 
-        private Dictionary<NodeController, List<NodeController>> GetEmptyGraph()
+        private Dictionary<MonoBehaviour, List<MonoBehaviour>> GetEmptyGraph()
         {
-            Dictionary<NodeController, List<NodeController>> newGraph =
-                new Dictionary<NodeController, List<NodeController>>();
+            Dictionary<MonoBehaviour, List<MonoBehaviour>> newGraph =
+                new Dictionary<MonoBehaviour, List<MonoBehaviour>>();
 
             if (nodes == null) return newGraph;
 
-            return nodes.Aggregate(new Dictionary<NodeController, List<NodeController>>(), (acc, node) =>
+            return nodes.Aggregate(new Dictionary<MonoBehaviour, List<MonoBehaviour>>(), (acc, node) =>
             {
-                acc[node] = new List<NodeController>();
+                acc[node] = new List<MonoBehaviour>();
                 return acc;
             });
         }
 
-        private Dictionary<NodeController, List<GraphLink>> AddLinkToShortestGraph(
-            Dictionary<NodeController, List<GraphLink>> currentGraph,
+        private Dictionary<MonoBehaviour, List<GraphLink>> AddLinkToShortestGraph(
+            Dictionary<MonoBehaviour, List<GraphLink>> currentGraph,
             GraphLink shortestLink
         )
         {
@@ -98,13 +98,13 @@ namespace BobVille.Graph
             return currentGraph;
         }
 
-        public List<NodeController> GetPath(NodeController srcNode, List<NodeController> dstNodes)
+        public List<MonoBehaviour> GetPath(MonoBehaviour srcNode, List<MonoBehaviour> dstNodes)
         {
             shortestGraph = GetShortestGraph(srcNode, dstNodes);
 
-            List<NodeController> path = new List<NodeController>();
+            List<MonoBehaviour> path = new List<MonoBehaviour>();
 
-            NodeController dstNode = dstNodes.Find((dstNode) => shortestGraph[dstNode].Count != 0);
+            MonoBehaviour dstNode = dstNodes.Find((dstNode) => shortestGraph[dstNode].Count != 0);
 
             path.Add(srcNode);
             shortestGraph[dstNode].ForEach((shortestLink) =>
@@ -115,15 +115,15 @@ namespace BobVille.Graph
             return path;
         }
 
-        private Dictionary<NodeController, List<GraphLink>> GetShortestGraph(NodeController srcNode, List<NodeController> dstNodes)
+        private Dictionary<MonoBehaviour, List<GraphLink>> GetShortestGraph(MonoBehaviour srcNode, List<MonoBehaviour> dstNodes)
         {
-            Dictionary<NodeController, List<GraphLink>> shortestGraph = GetEmptyShortestGraph();
+            Dictionary<MonoBehaviour, List<GraphLink>> shortestGraph = GetEmptyShortestGraph();
 
-            List<NodeController> openedListNodes = new List<NodeController>();
-            List<NodeController> closedListNodes = new List<NodeController>();
+            List<MonoBehaviour> openedListNodes = new List<MonoBehaviour>();
+            List<MonoBehaviour> closedListNodes = new List<MonoBehaviour>();
 
-            Dictionary<NodeController, float> distanceToNodes = new Dictionary<NodeController, float>();
-            Dictionary<NodeController, float> heuristicOfNodes = new Dictionary<NodeController, float>();
+            Dictionary<MonoBehaviour, float> distanceToNodes = new Dictionary<MonoBehaviour, float>();
+            Dictionary<MonoBehaviour, float> heuristicOfNodes = new Dictionary<MonoBehaviour, float>();
 
             nodes.ForEach((node) =>
             {
@@ -136,7 +136,7 @@ namespace BobVille.Graph
 
             while (openedListNodes.Count != 0)
             {
-                NodeController closestNode = FindClosestNode(openedListNodes, distanceToNodes, heuristicOfNodes);
+                MonoBehaviour closestNode = FindClosestNode(openedListNodes, distanceToNodes, heuristicOfNodes);
                 openedListNodes.Remove(closestNode);
                 closedListNodes.Add(closestNode);
 
@@ -163,13 +163,13 @@ namespace BobVille.Graph
             return shortestGraph;
         }
 
-        private NodeController FindClosestNode(
-            List<NodeController> openedListNodes,
-            Dictionary<NodeController, float> distanceToNodes,
-            Dictionary<NodeController, float> heuristicOfNodes
+        private MonoBehaviour FindClosestNode(
+            List<MonoBehaviour> openedListNodes,
+            Dictionary<MonoBehaviour, float> distanceToNodes,
+            Dictionary<MonoBehaviour, float> heuristicOfNodes
         )
         {
-            NodeController closestNode = openedListNodes[0];
+            MonoBehaviour closestNode = openedListNodes[0];
             float bestF = distanceToNodes[closestNode] + heuristicOfNodes[closestNode];
 
             openedListNodes.ForEach((currentNode) =>
@@ -190,7 +190,7 @@ namespace BobVille.Graph
             return closestNode;
         }
 
-        private List<GraphLink> GetSuccessorLinks(NodeController node)
+        private List<GraphLink> GetSuccessorLinks(MonoBehaviour node)
         {
             return graph[node].Select((adjacentNode) =>
             {
@@ -200,12 +200,12 @@ namespace BobVille.Graph
 
         // debugs
 
-        public void DrawGraph(Color color, float duration, Dictionary<NodeController, List<NodeController>> currentGraph = null)
+        public void DrawGraph(Color color, float duration, Dictionary<MonoBehaviour, List<MonoBehaviour>> currentGraph = null)
         {
             if (currentGraph == null) currentGraph = graph;
             currentGraph.Keys.ToList().ForEach((currentNode) =>
             {
-                List<NodeController> adjacentNodes = currentGraph[currentNode];
+                List<MonoBehaviour> adjacentNodes = currentGraph[currentNode];
                 adjacentNodes.ForEach((adjacentNode) =>
                 {
                     Debug.DrawLine(currentNode.transform.position, adjacentNode.transform.position, color, duration);
@@ -213,7 +213,7 @@ namespace BobVille.Graph
             });
         }
 
-        public void DrawShortestGraph(Color color, float duration, Dictionary<NodeController, List<GraphLink>> currentGraph = null)
+        public void DrawShortestGraph(Color color, float duration, Dictionary<MonoBehaviour, List<GraphLink>> currentGraph = null)
         {
             if (currentGraph == null) currentGraph = shortestGraph;
             if (currentGraph == null) return;
@@ -228,12 +228,12 @@ namespace BobVille.Graph
             });
         }
 
-        public void LogGraph(Dictionary<NodeController, List<NodeController>> currentGraph = null)
+        public void LogGraph(Dictionary<MonoBehaviour, List<MonoBehaviour>> currentGraph = null)
         {
             if (currentGraph == null) currentGraph = graph;
             currentGraph.Keys.ToList().ForEach((key) =>
             {
-                List<NodeController> values = currentGraph[key];
+                List<MonoBehaviour> values = currentGraph[key];
                 Debug.Log("key : ");
                 Debug.Log(key.transform.name);
 

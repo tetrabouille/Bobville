@@ -6,12 +6,12 @@ namespace BobVille.Graph
 {
     public class GraphLink
     {
-        public NodeController nodeA;
-        public NodeController nodeB;
+        public MonoBehaviour nodeA;
+        public MonoBehaviour nodeB;
         public Vector3 direction;
         private bool oriented;
 
-        public GraphLink(NodeController nodeA, NodeController nodeB, bool oriented = false)
+        public GraphLink(MonoBehaviour nodeA, MonoBehaviour nodeB, bool oriented = false)
         {
             this.nodeA = nodeA;
             this.nodeB = nodeB;
@@ -30,7 +30,7 @@ namespace BobVille.Graph
             return Vector3.Distance(nodeA.transform.position, nodeB.transform.position);
         }
 
-        public float GetHeuristic(List<NodeController> targetNodes)
+        public float GetHeuristic(List<MonoBehaviour> targetNodes)
         {
             // get shortest distance to any target node
             float shortestDistance = targetNodes.Aggregate(float.MaxValue, (acc, targetNode) =>
@@ -41,18 +41,18 @@ namespace BobVille.Graph
             return shortestDistance;
         }
 
-        public float GetDistanceTo(NodeController targetNode)
+        public float GetDistanceTo(MonoBehaviour targetNode)
         {
             return Vector3.Distance(nodeB.transform.position, targetNode.transform.position);
         }
 
-        public bool Contains(NodeController node)
+        public bool Contains(MonoBehaviour node)
         {
             return Object.ReferenceEquals(nodeA, node) ||
                 Object.ReferenceEquals(nodeB, node);
         }
 
-        public void SetOrientation(NodeController node)
+        public void SetOrientation(MonoBehaviour node)
         {
             if (Object.ReferenceEquals(nodeA, node)) return;
             this.nodeB = this.nodeA;
@@ -60,7 +60,7 @@ namespace BobVille.Graph
             this.oriented = true;
         }
 
-        static public Ray GetRay(NodeController nodeA, NodeController nodeB)
+        static public Ray GetRay(MonoBehaviour nodeA, MonoBehaviour nodeB)
         {
             return new Ray(nodeA.transform.position, nodeB.transform.position - nodeA.transform.position);
         }

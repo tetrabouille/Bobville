@@ -16,22 +16,22 @@ namespace BobVille.Bob
         [SerializeField] private float WORK_TIME = 5f;
         [SerializeField] private float WORK_SPEED = 1f;
 
-        private NodeController currentNode;
+        private MonoBehaviour currentNode;
         private ActionState actionState = ActionState.MoveOnPath;
         private MoveOnPathState moveOnPathState = MoveOnPathState.Turning;
-        private List<NodeController> path;
+        private List<MonoBehaviour> path;
         private AutoGraphController graphController;
         private int pathIndex = 0;
         private float currentWorkTime = 0f;
         private float currentWalkTime = 0f;
-        private List<NodeController> nodes;
+        private List<MonoBehaviour> nodes;
         private Rigidbody rb;
 
         // Start is called before the first frame update
         void Start()
         {
             graphController = GameObject.FindObjectsOfType<AutoGraphController>().Single((g) => g.tag == "Graph");
-            nodes = graphController.GetComponentsInChildren<NodeController>().ToList();
+            nodes = graphController.GetComponentsInChildren<NodeController>().Cast<MonoBehaviour>().ToList();
             rb = GetComponent<Rigidbody>();
         }
 
@@ -78,10 +78,10 @@ namespace BobVille.Bob
                 pathIndex = 0;
                 if (this.currentNode == null) this.currentNode = nodes[Random.Range(0, nodes.Count)];
 
-                NodeController randomTarget = nodes[Random.Range(0, nodes.Count)];
+                MonoBehaviour randomTarget = nodes[Random.Range(0, nodes.Count)];
                 while (randomTarget == this.currentNode) randomTarget = nodes[Random.Range(0, nodes.Count)];
 
-                path = graphController.graphCore.GetPath(this.currentNode, new List<NodeController>() { randomTarget });
+                path = graphController.graphCore.GetPath(this.currentNode, new List<MonoBehaviour>() { randomTarget });
             }
 
             if (path.Count <= pathIndex || path.Count == 0)
@@ -117,7 +117,7 @@ namespace BobVille.Bob
             moveOnPathState = newState;
         }
 
-        private void TurnOnPath(NodeController currentNode)
+        private void TurnOnPath(MonoBehaviour currentNode)
         {
             Vector3 targetVector = new Vector3(
                 currentNode.transform.position.x - transform.position.x,
@@ -158,7 +158,7 @@ namespace BobVille.Bob
             transform.rotation = Quaternion.LookRotation(smoothTarget);
         }
 
-        private void WalkOnPath(NodeController currentNode)
+        private void WalkOnPath(MonoBehaviour currentNode)
         {
             Vector3 target = new Vector3(
                 currentNode.transform.position.x,

@@ -11,7 +11,7 @@ namespace BobVille.Graph
         // Start is called before the first frame update
         void Start()
         {
-            List<NodeController> nodes = gameObject.transform.Find("Nodes").GetComponentsInChildren<NodeController>().ToList();
+            List<MonoBehaviour> nodes = gameObject.transform.Find("Nodes").GetComponentsInChildren<NodeController>().Cast<MonoBehaviour>().ToList();
             List<LinkController> links = gameObject.transform.Find("Links").GetComponentsInChildren<LinkController>().ToList();
             graphCore = new GraphCore(links.Select(link => link.link).ToList(), nodes);
         }
